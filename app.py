@@ -19,7 +19,7 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# Custom CSS for improved mobile UX
+# Custom CSS for improved mobile UX and PC mode toggle
 st.markdown("""
 <style>
 /* Base styles for the app */
@@ -215,6 +215,39 @@ div[data-testid="stVerticalBlock"] > div:not(:last-child) {
         font-size: 1.1em;
     }
 }
+
+/* Force PC Mode styles - applied when 'force-pc-mode' class is on body */
+body.force-pc-mode .main-header h1 {
+    font-size: 2.5em !important; /* Override mobile size to PC size */
+}
+body.force-pc-mode .main-header p {
+    font-size: 1.1em !important;
+}
+body.force-pc-mode .metric-card .st-emotion-cache-l9bizc.e16fv1u00 {
+    font-size: 1.8em !important;
+}
+body.force-pc-mode .metric-card label {
+    font-size: 0.9em !important;
+}
+body.force-pc-mode .stButton button,
+body.force-pc-mode .stDownloadLink a[download] {
+    width: auto !important; /* Revert to auto width */
+    padding: 10px 20px !important; /* Revert to desktop padding */
+    font-size: 16px !important; /* Revert to desktop font size */
+}
+body.force-pc-mode .stButton + .stButton,
+body.force-pc-mode .stDownloadLink + .stDownloadLink {
+    margin-top: 4px !important; /* Revert margin between buttons */
+}
+body.force-pc-mode .stTabs [data-baseweb="tab-list"] button {
+    font-size: 1.1em !important;
+    padding: 10px 15px !important;
+}
+body.force-pc-mode h1 { font-size: 2.5em !important; }
+body.force-pc-mode h2 { font-size: 2em !important; }
+body.force-pc-mode h3 { font-size: 1.75em !important; }
+body.force-pc-mode h4 { font-size: 1.5em !important; }
+
 
 </style>
 """, unsafe_allow_html=True)
@@ -675,6 +708,34 @@ def main():
     # Muat data langsung dari GitHub
     df = analyzer.load_and_process_data(github_csv_url)
     
+    # Add a display mode selector in the sidebar
+    st.sidebar.header("🖥️ Display Mode")
+    display_mode = st.sidebar.radio(
+        "Pilih Mode Tampilan:",
+        ("Responsive (Default)", "Force PC Mode"),
+        key="display_mode_selector"
+    )
+
+    # Inject JavaScript to add/remove a class to the body based on display mode
+    if display_mode == "Force PC Mode":
+        st.markdown(
+            """
+            <script>
+            document.body.classList.add('force-pc-mode');
+            </script>
+            """,
+            unsafe_allow_html=True
+        )
+    else:
+        st.markdown(
+            """
+            <script>
+            document.body.classList.remove('force-pc-mode');
+            </script>
+            """,
+            unsafe_allow_html=True
+        )
+
     if df is not None:
         st.success(f"✅ Data loaded successfully from GitHub! {len(df)} rows loaded.")
         
@@ -796,38 +857,38 @@ def main():
                         analyzer.download_button(fig_weekly_change, filename=f"weekly_change_{growth_analysis_param}.png", label=f"Download {weekly_change_title} Chart")
                     else:
                         st.info(f"Tidak ada data perubahan mingguan untuk {growth_analysis_param}. Pastikan ada data minimal 2 minggu berturut-turut.")
-            
-            st.markdown("---")
-            st.subheader("🔬 Uji Statistik (ANOVA)")
-            
-            if filtered_df['plot'].nunique() < 2:
-                st.info("⚠️ ANOVA membutuhkan setidaknya 2 plot untuk perbandingan statistik.")
-            else:
-                anova_param = st.selectbox("Pilih Parameter untuk Uji ANOVA:", 
-                                           parameters_to_analyze_growth, 
-                                           format_func=lambda x: x.replace('_', ' ').title(), key='anova_param_select')
                 
-                if anova_param:
-                    # Untuk ANOVA, kita ingin membandingkan rata-rata keseluruhan (atau rata-rata akhir)
-                    # Ini mengambil semua nilai parameter untuk setiap plot untuk ANOVA
-                    f_statistic, p_value = analyzer.perform_anova(filtered_df, anova_param)
+                st.markdown("---")
+                st.subheader("🔬 Uji Statistik (ANOVA)")
+                
+                if filtered_df['plot'].nunique() < 2:
+                    st.info("⚠️ ANOVA membutuhkan setidaknya 2 plot untuk perbandingan statistik.")
+                else:
+                    anova_param = st.selectbox("Pilih Parameter untuk Uji ANOVA:", 
+                                               parameters_to_analyze_growth, 
+                                               format_func=lambda x: x.replace('_', ' ').title(), key='anova_param_select')
                     
-                    if f_statistic is not None:
-                        st.write(f"**Hasil Uji ANOVA untuk Rata-rata {anova_param.replace('_', ' ').title()} antar Plot:**")
-                        st.write(f"F-statistik: `{f_statistic:.4f}`")
-                        st.write(f"P-value: `{p_value:.4f}`")
+                    if anova_param:
+                        # Untuk ANOVA, kita ingin membandingkan rata-rata keseluruhan (atau rata-rata akhir)
+                        # Ini mengambil semua nilai parameter untuk setiap plot untuk ANOVA
+                        f_statistic, p_value = analyzer.perform_anova(filtered_df, anova_param)
                         
-                        alpha = st.slider("Tingkat Signifikansi (Alpha):", 0.01, 0.10, 0.05, 0.01, help="Nilai p-value di bawah Alpha menunjukkan perbedaan signifikan.")
-                        
-                        if p_value < alpha:
-                            st.success(f"**Kesimpulan:** Dengan tingkat signifikansi {alpha}, terdapat perbedaan yang **signifikan secara statistik** pada rata-rata {anova_param.replace('_', ' ').title()} antar plot.")
+                        if f_statistic is not None:
+                            st.write(f"**Hasil Uji ANOVA untuk Rata-rata {anova_param.replace('_', ' ').title()} antar Plot:**")
+                            st.write(f"F-statistik: `{f_statistic:.4f}`")
+                            st.write(f"P-value: `{p_value:.4f}`")
+                            
+                            alpha = st.slider("Tingkat Signifikansi (Alpha):", 0.01, 0.10, 0.05, 0.01, help="Nilai p-value di bawah Alpha menunjukkan perbedaan signifikan.")
+                            
+                            if p_value < alpha:
+                                st.success(f"**Kesimpulan:** Dengan tingkat signifikansi {alpha}, terdapat perbedaan yang **signifikan secara statistik** pada rata-rata {anova_param.replace('_', ' ').title()} antar plot.")
+                            else:
+                                st.info(f"**Kesimpulan:** Dengan tingkat signifikansi {alpha}, tidak terdapat perbedaan yang signifikan secara statistik pada rata-rata {anova_param.replace('_', ' ').title()} antar plot.")
+                            st.markdown("*(Catatan: ANOVA menguji apakah ada setidaknya satu plot yang rata-ratanya berbeda dari yang lain. Untuk mengetahui plot mana yang berbeda, dibutuhkan uji post-hoc seperti Tukey HSD, yang lebih kompleks.)*")
                         else:
-                            st.info(f"**Kesimpulan:** Dengan tingkat signifikansi {alpha}, tidak terdapat perbedaan yang signifikan secara statistik pada rata-rata {anova_param.replace('_', ' ').title()} antar plot.")
-                        st.markdown("*(Catatan: ANOVA menguji apakah ada setidaknya satu plot yang rata-ratanya berbeda dari yang lain. Untuk mengetahui plot mana yang berbeda, dibutuhkan uji post-hoc seperti Tukey HSD, yang lebih kompleks.)*")
-                    else:
-                        st.warning(p_value) # Tampilkan pesan error dari perform_anova
+                            st.warning(p_value) # Tampilkan pesan error dari perform_anova
+                
             
-        
         with tab3:
             st.subheader("🗓️ Rata-rata Pertumbuhan per Minggu per Plot")
             if not filtered_df.empty:
@@ -848,11 +909,11 @@ def main():
                 fig_weekly_tinggi_height = 500
                 if weekly_chart_type == 'Line':
                     fig_weekly_tinggi = px.line(weekly_avg, x='minggu', y='tinggi_cm', color='plot',
-                                              title='Rata-rata Tinggi Tanaman per Minggu',
-                                              labels={'tinggi_cm': 'Tinggi (cm)', 'minggu': 'Minggu', 'plot': 'Plot'},
-                                              color_discrete_sequence=analyzer.color_palette,
-                                              template=analyzer.plot_template,
-                                              markers=False) # DIGANTI: markers=False
+                                                  title='Rata-rata Tinggi Tanaman per Minggu',
+                                                  labels={'tinggi_cm': 'Tinggi (cm)', 'minggu': 'Minggu', 'plot': 'Plot'},
+                                                  color_discrete_sequence=analyzer.color_palette,
+                                                  template=analyzer.plot_template,
+                                                  markers=False) # DIGANTI: markers=False
                     fig_weekly_tinggi.update_layout(hovermode='x unified')
                 elif weekly_chart_type == 'Bar':
                     fig_weekly_tinggi = px.bar(weekly_avg, x='minggu', y='tinggi_cm', color='plot', barmode='group',
