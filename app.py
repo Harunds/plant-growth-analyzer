@@ -19,9 +19,16 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# Custom CSS
+# Custom CSS for improved mobile UX
 st.markdown("""
 <style>
+/* Base styles for the app */
+body {
+    font-family: "Inter", sans-serif;
+    color: #333;
+    background-color: #f0f2f6; /* Lighter background */
+}
+
 .main-header {
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     padding: 2rem;
@@ -29,6 +36,15 @@ st.markdown("""
     margin-bottom: 2rem;
     text-align: center;
     color: white;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+}
+.main-header h1 {
+    font-size: 2.5em; /* Larger for desktop */
+    margin-bottom: 0.5rem;
+}
+.main-header p {
+    font-size: 1.1em;
+    opacity: 0.9;
 }
 
 .metric-card {
@@ -38,58 +54,166 @@ st.markdown("""
     box-shadow: 0 2px 4px rgba(0,0,0,0.1);
     border-left: 4px solid #3498db;
     margin: 1rem 0;
+    text-align: center; /* Center metrics */
+}
+/* Target the metric value and label within the metric card */
+.metric-card > div > div > div {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+.metric-card label { /* Metric label */
+    font-size: 0.9em;
+    color: #666;
+}
+.metric-card .st-emotion-cache-l9bizc.e16fv1u00 { /* Metric value - specific Streamlit class */
+    font-size: 1.8em;
+    font-weight: bold;
+    color: #3498db;
 }
 
 .stAlert {
     margin-top: 1rem;
+    border-radius: 8px;
 }
 
-/* Style for the custom download link to look more like a button */
-.stButton > button { /* Existing button style */
-    background-color: #4CAF50;
-    color: white;
+/* General button styling */
+.stButton button, .stDownloadLink a[download] {
+    background-color: #4CAF50; /* Green default for general buttons */
+    color: white !important; /* Ensure text is white */
     padding: 10px 20px;
     text-align: center;
-    text-decoration: none;
+    text-decoration: none !important; /* No underline */
     display: inline-block;
     font-size: 16px;
     margin: 4px 2px;
     cursor: pointer;
     border-radius: 8px;
     border: none;
+    transition: background-color 0.3s ease, transform 0.2s ease;
 }
 
-/* Custom download link style - makes it look like a button */
-.stDownloadLink button {
-    background-color: #008CBA; /* Blue */
-    color: white;
-    padding: 10px 20px;
-    text-align: center;
-    text-decoration: none;
-    display: inline-block;
-    font-size: 16px;
-    margin: 4px 2px;
-    cursor: pointer;
-    border-radius: 8px;
-    border: none;
+.stButton button:hover, .stDownloadLink a[download]:hover {
+    background-color: #45a049; /* Darker green on hover */
+    transform: translateY(-2px);
 }
-/* Ensure the markdown link also looks like a button */
-a[download] {
-    background-color: #008CBA; /* Blue */
-    color: white !important; /* Important to override default link color */
-    padding: 10px 20px;
-    text-align: center;
-    text-decoration: none !important; /* Remove underline */
-    display: inline-block;
-    font-size: 16px;
-    margin: 4px 2px;
-    cursor: pointer;
-    border-radius: 8px;
-    border: none;
+
+/* Specific style for download links */
+.stDownloadLink a[download] {
+    background-color: #008CBA; /* Blue for downloads */
 }
-a[download]:hover {
+.stDownloadLink a[download]:hover {
     background-color: #005f7a; /* Darker blue on hover */
-    color: white !important;
+}
+
+/* Streamlit Tabs Styling */
+.stTabs [data-baseweb="tab-list"] button {
+    font-size: 1.1em;
+    font-weight: bold;
+    color: #555;
+    background-color: #f8f8f8;
+    border-radius: 5px 5px 0 0;
+    padding: 10px 15px;
+    margin-right: 5px;
+    border-bottom: 3px solid transparent;
+    transition: all 0.2s ease;
+}
+.stTabs [data-baseweb="tab-list"] button:hover {
+    color: #3498db;
+    background-color: #f0f0f0;
+}
+.stTabs [data-baseweb="tab-list"] button[aria-selected="true"] {
+    color: #3498db;
+    border-bottom: 3px solid #3498db;
+    background-color: white;
+}
+
+/* Responsive adjustments for subheaders */
+h1, h2, h3, h4 {
+    margin-top: 2em;
+    margin-bottom: 1em;
+    color: #2c3e50;
+}
+
+/* Adjustments for expander styling */
+.stExpander {
+    border-radius: 10px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    background-color: white;
+    padding: 1rem;
+    margin-top: 1rem;
+}
+.stExpander > div > div { /* Target the header part */
+    padding: 0.5rem 1rem;
+    background-color: #f9f9f9;
+    border-radius: 8px;
+    border: 1px solid #ddd;
+}
+.stExpander [data-baseweb="button"] { /* Expander arrow button */
+    color: #3498db !important;
+}
+
+/* General spacing for Streamlit widgets to improve readability */
+div[data-testid="stVerticalBlock"] > div:not(:last-child) {
+    margin-bottom: 1rem;
+}
+
+
+/* Media Queries for Mobile Responsiveness */
+@media (max-width: 768px) {
+    .main-header {
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+    }
+    .main-header h1 {
+        font-size: 2em; /* Smaller for mobile */
+    }
+    .main-header p {
+        font-size: 1em;
+    }
+
+    .metric-card {
+        padding: 0.8rem;
+        margin: 0.8rem 0;
+    }
+    .metric-card .st-emotion-cache-l9bizc.e16fv1u00 { /* Metric value - specific Streamlit class */
+        font-size: 1.5em; /* Smaller metric values */
+    }
+    .metric-card label {
+        font-size: 0.8em;
+    }
+
+    /* Adjust button sizes for touch targets */
+    .stButton button, .stDownloadLink a[download] {
+        padding: 8px 15px;
+        font-size: 14px;
+        width: 100%; /* Make buttons full width on small screens */
+        box-sizing: border-box; /* Include padding/border in width */
+    }
+    /* Add margin between stacked buttons */
+    .stButton + .stButton, .stDownloadLink + .stDownloadLink {
+        margin-top: 10px;
+    }
+
+    /* Adjust tab font size for better fit on small screens */
+    .stTabs [data-baseweb="tab-list"] button {
+        font-size: 0.9em;
+        padding: 8px 10px;
+    }
+
+    h1 {
+        font-size: 1.8em;
+    }
+    h2 {
+        font-size: 1.5em;
+    }
+    h3 {
+        font-size: 1.3em;
+    }
+    h4 {
+        font-size: 1.1em;
+    }
 }
 
 </style>
@@ -947,6 +1071,7 @@ def main():
 
     else:
         st.info("👆 Data CSV sedang dimuat dari GitHub...")
+        st.info("Pastikan Anda terhubung ke internet untuk memuat data dari GitHub.")
         
         with st.expander("📋 Format CSV yang Diharapkan"):
             example_data = pd.DataFrame({
